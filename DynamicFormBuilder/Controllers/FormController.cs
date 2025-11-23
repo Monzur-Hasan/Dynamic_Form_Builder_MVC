@@ -63,6 +63,9 @@ public class FormController : Controller
     [HttpPost("api/form/update")]
     public async Task<IActionResult> Update([FromBody] FormDto model)
     {
+        if (await _formRepo.IsTitleExistsAsync(model.Title))
+            return Conflict("A form with this title already exists.");
+
         if (string.IsNullOrWhiteSpace(model.Title))
             return BadRequest("Title is required.");
 
