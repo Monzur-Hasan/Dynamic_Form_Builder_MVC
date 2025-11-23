@@ -9,7 +9,7 @@ public class OptionRepository : IOptionRepository
     private readonly SqlConnection _connection;
 
     public OptionRepository(string connectionString)
-    {        
+    {
         _connection = new SqlConnection(connectionString);
     }
 
@@ -204,21 +204,33 @@ public class OptionRepository : IOptionRepository
         using var tran = ((SqlConnection)_connection).BeginTransaction();
         try
         {
-            using var cmdChild = _connection.CreateCommand();
-            cmdChild.Transaction = tran;
-            cmdChild.CommandText = "DELETE OptionValues WHERE OptionId=@i";
-            cmdChild.AddParameter("@i", id);
-            await ((SqlCommand)cmdChild).ExecuteNonQueryAsync();
+            using (var cmdFF = _connection.CreateCommand())
+            {
+                cmdFF.Transaction = tran;
+                cmdFF.CommandText = "DELETE FROM FormFields WHERE OptionId=@i";
+                cmdFF.AddParameter("@i", id);
+                await ((SqlCommand)cmdFF).ExecuteNonQueryAsync();
+            }
 
-            using var cmd = _connection.CreateCommand();
-            cmd.Transaction = tran;
-            cmd.CommandText = "DELETE Options WHERE OptionId=@i";
-            cmd.AddParameter("@i", id);
+            using (var cmdChild = _connection.CreateCommand())
+            {
+                cmdChild.Transaction = tran;
+                cmdChild.CommandText = "DELETE FROM OptionValues WHERE OptionId=@i";
+                cmdChild.AddParameter("@i", id);
+                await ((SqlCommand)cmdChild).ExecuteNonQueryAsync();
+            }
 
-            int rows = await ((SqlCommand)cmd).ExecuteNonQueryAsync();
-            tran.Commit();
+            using (var cmd = _connection.CreateCommand())
+            {
+                cmd.Transaction = tran;
+                cmd.CommandText = "DELETE FROM Options WHERE OptionId=@i";
+                cmd.AddParameter("@i", id);
 
-            return rows > 0;
+                int rows = await ((SqlCommand)cmd).ExecuteNonQueryAsync();
+                tran.Commit();
+
+                return rows > 0;
+            }
         }
         catch
         {
@@ -230,6 +242,7 @@ public class OptionRepository : IOptionRepository
             _connection.Close();
         }
     }
+
 
     public async Task<bool> AddOptionValueAsync(int setId, string value)
     {
