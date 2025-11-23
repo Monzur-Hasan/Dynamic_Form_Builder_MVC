@@ -1,0 +1,75 @@
+﻿@{
+    ViewData["Title"] = "Forms";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Forms</h3>
+    <div>
+        <a class="btn btn-success" href="/Form/Create">Create New Form</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table id="formsTable" class="table table-striped table-bordered" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Form Title</th>
+                    <th>Created Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function(){
+            $('#formsTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: '/Home/List',
+                    type: 'POST'
+                },
+                columns: [
+                    // { data: 'formId' },
+                    { data: 'title' },
+                    {
+                        data: 'createdDate',
+                        render: function(data) {
+                        if (!data) return '';
+                        const date = new Date(data);
+
+                        const day = String(date.getDate()).padStart(2, '0');
+
+                        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                        const month = monthNames[date.getMonth()];
+
+                        const year = date.getFullYear().toString().slice(-2);
+
+                        let hours = date.getHours();
+                        const minutes = String(date.getMinutes()).padStart(2, '0');
+                        const ampm = hours >= 12 ? 'PM' : 'AM';
+                        hours = hours % 12;
+                        hours = hours ? hours : 12;
+                        const hourStr = String(hours).padStart(2, '0');
+
+                        return `${day}-${month}-${year} ${hourStr}:${minutes} ${ampm}`;
+                      }
+                    },
+                    { data: null, orderable: false, render: function(d) {
+                        return `
+                        <a class="btn btn-sm btn-primary me-2" href="/Form/Preview?id=${d.formId}">Preview</a>
+                        <a class="btn btn-sm btn-success me-2" href="/Form/Edit?id=${d.formId}">Edit</a>
+                        <button class="btn btn-sm btn-danger delete-form" data-id="${d.formId}">Delete</button>`;
+                     } 
+                    }
+                ],
+                lengthMenu: [10, 25, 50, 100]
+            });
+        });
+    </script>
+}

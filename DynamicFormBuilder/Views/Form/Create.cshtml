@@ -1,0 +1,52 @@
+﻿@{
+    ViewData["Title"] = "Create Form";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Create New Form</h3>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="row mb-3 align-items-center">
+            <label class="form-label col-sm-2 fw-bold">
+                Form Title <span class="text-danger">*</span>
+            </label>
+
+            <div class="col-sm-8">
+                <input id="formTitle" class="form-control" placeholder="Enter form title" />
+                <div class="invalid-feedback"></div>
+            </div>
+
+            <div class="col-sm-2 d-flex align-items-center mt-2 mt-sm-0">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="titleRequired" checked disabled/>
+                    <label class="form-check-label fw-bold" for="titleRequired">Required</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Field Button -->
+        <div class="mb-3">
+            <button id="addField" class="btn btn-outline-primary">
+                <i class="bi bi-plus-circle"></i> Add More Field
+            </button>
+        </div>
+
+        <!-- Dynamic Field Container -->
+        <form id="fieldsContainer" class="mt-3"></form>
+
+        <div class="mt-4 text-end">
+            <button id="submitForm" class="btn btn-success px-4">Submit</button>
+            <a href="/" class="btn btn-secondary ms-2 px-4"> <i class="bi bi-arrow-left"></i> Back to List</a>
+
+        </div>
+
+    </div>
+</div>
+
+<script src="~/lib/bootstrap/js/sweetalert2@11.js"></script>
+
+@section Scripts {
+    @* global form-builder.js will run *@
+}

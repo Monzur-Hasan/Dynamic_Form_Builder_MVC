@@ -1,0 +1,92 @@
+/* Container adjustments */
+.container {
+    max-width: 900px;
+    margin: 25px auto;
+    font-family: Arial, sans-serif;
+}
+
+/* Buttons */
+.btn {
+    padding: 8px 12px;
+    background: #2a7ae2;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+    .btn:hover {
+        background: #1f5fb8;
+    }
+
+/* Form controls */
+.form-control {
+    width: 100%;
+    padding: 7px;
+    margin-top: 5px;
+    box-sizing: border-box;
+}
+
+/* Field item cards */
+.field-item {
+    border: 1px solid #ccc;
+    padding: 12px;
+    border-radius: 5px;
+    background: #fafafa;
+}
+
+/* Remove button */
+.remove-field {
+    background: #d9534f;
+    color: #fff;
+    padding: 6px 8px;
+    border-radius: 4px;
+}
+
+    .remove-field:hover {
+        background: #b52b27;
+    }
+
+select[disabled] {
+    background-color: #e9ecef;
+    color: #555;
+}
+
+.form-group label {
+    font-weight: bold;
+}
+
+/* Admin tweaks */
+.container-fluid {
+    padding: 0;
+}
+
+.sidebar {
+    min-height: 100vh;
+}
+
+/* Mobile Responsive Sidebar */
+@media (max-width: 768px) {
+    .sidebar {
+        position: relative;
+        min-height: auto;
+        height: auto;
+        padding-top: 10px;
+    }
+
+        .sidebar .nav-link {
+            padding: 8px 12px;
+        }
+
+    main {
+        padding: 15px;
+    }
+}
+
+/* Buttons full width on mobile */
+@media (max-width: 576px) {
+    .btn {
+        width: 100%;
+        margin-bottom: 4px;
+    }
+}

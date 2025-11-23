@@ -1,0 +1,73 @@
+﻿@model OptionSetDto
+
+@{
+    ViewData["Title"] = "Edit Option Set";
+}
+
+<div class="card">
+    <div class="card-body">
+        <h4>Edit Option Set</h4>
+
+        <form id="optionSetEditForm">
+            <input type="hidden" name="OptionId" id="OptionId" value="@Model.OptionId" />
+
+            <div class="mb-3">
+                <label class="form-label">Name</label> <span class="text-danger">*</span>
+                <input name="Name" id="Name" value="@Model.Name" class="form-control" placeholder="Enter option set name" />
+                <div class="invalid-feedback">Option Set name is required.</div>
+            </div>
+
+            <button class="btn btn-primary" id="btnUpdate">Update</button>
+            <a href="/OptionSet" class="btn btn-secondary ms-2"><i class="bi bi-arrow-left"></i> Back to List</a>
+        </form>
+    </div>
+</div>
+
+<script src="~/lib/bootstrap/js/sweetalert2@11.js"></script>
+
+@section Scripts {
+    <script>
+        $(function () {
+
+            $("#btnUpdate").on("click", function (e) {
+                e.preventDefault();
+
+                let id = $("#OptionId").val();
+                let name = $("#Name").val().trim();
+
+                $("#Name").removeClass("is-invalid");
+
+                if (!name) {
+                    $("#Name").addClass("is-invalid");
+                    return;
+                }
+                                
+                $("#btnUpdate").prop("disabled", true);
+
+                $.ajax({
+                    url: "/OptionSet/Edit",
+                    method: "POST",
+                    data: { OptionId: id, Name: name },
+                    success: function () {
+                        Swal.fire({
+                            icon: "success",
+                            title: "Updated!",
+                            text: "Option Set updated successfully.",
+                            confirmButtonText: "OK"
+                        }).then(() => {
+                            window.location.href = "/OptionSet";
+                        });
+                    },
+                    error: function (xhr) {
+                        Swal.fire("Error", xhr.responseText || "Update failed.", "error");
+                    },
+                    complete: function () {
+                        $("#btnUpdate").prop("disabled", false);
+                    }
+                });
+
+            });
+
+        });
+    </script>
+}

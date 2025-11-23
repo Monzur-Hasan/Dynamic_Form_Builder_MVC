@@ -1,0 +1,40 @@
+﻿@model DynamicFormBuilder.Models.FormDto
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Preview Form";
+}
+
+<div class="mb-3">
+    <h3>Preview: @Model.Title</h3>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form>
+            @foreach (var field in Model.Fields)
+            {
+                <div class="mb-3">
+                    <label class="form-label">
+                        @field.Label
+                        @if (field.IsRequired)
+                        {
+                            <span class="text-danger">*</span>
+                        }
+                    </label>
+
+                    <select class="form-select" disabled>
+                        <option>@(field.SelectedOption ?? "(not selected)")</option>
+                    </select>
+                </div>
+            }
+
+            <div class="mt-4">
+                <a href="@Url.Action("Index", "Home")" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to List
+                </a>
+            </div>
+
+        </form>
+    </div>
+</div>

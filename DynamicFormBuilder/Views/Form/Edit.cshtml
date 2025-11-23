@@ -1,0 +1,263 @@
+﻿@model FormDto
+
+@{
+    ViewData["Title"] = "Edit Form";
+}
+
+<div class="mb-4">
+    <h3 class="fw-bold">Edit Form</h3>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+
+        <input type="hidden" id="formId" value="@Model.FormId" />
+
+        <!-- Form Title -->
+        <div class="row mb-3 align-items-center">
+            <label class="form-label col-sm-2 fw-bold">
+                Form Title <span class="text-danger">*</span>
+            </label>
+            <div class="col-sm-10">
+                <input id="formTitle" value="@Model.Title" class="form-control" placeholder="Enter form title" />
+                <div class="invalid-feedback"></div>
+            </div>
+        </div>
+
+        <div class="mb-3 text-start">
+            <button id="addField" type="button" class="btn btn-outline-primary">
+                <i class="bi bi-plus-circle"></i> Add More Field
+            </button>
+        </div>
+
+        <div id="fieldsContainer" class="mt-3"></div>
+
+        <div class="mt-4 d-flex justify-content-end">
+            <button id="updateForm" type="button" class="btn btn-warning px-4 me-2">Update</button>
+            <a href="/" class="btn btn-secondary px-4"><i class="bi bi-arrow-left"></i> Back to List</a>
+        </div>
+
+    </div>
+</div>
+
+<script src="~/lib/bootstrap/js/sweetalert2@11.js"></script>
+
+@section Scripts {
+    <script>
+
+        let optionSets = [];
+        let fieldIndex = 0;
+
+        // Convert existing fields
+        let existingFields =
+            @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Fields))
+            .map(f => ({
+                label: f.Label,
+                isRequired: f.IsRequired,
+                optionId: f.OptionId,
+                selectedOptionValueId: f.SelectedOptionValueId
+            }));
+
+        // Load OptionSets
+        function loadOptionSets() {
+            return $.get('/api/optionsets').done(res => optionSets = res);
+        }
+
+        // Get Option Values
+        function loadOptionValues(optionId) {
+            return $.get('/api/options/' + optionId);
+        }
+
+        // Field Template
+        function buildFieldHtml(existing) {
+            let idx = fieldIndex++;
+
+            return `
+            <div class="field-item mb-3 p-3 border rounded" data-index="${idx}">
+                <div class="row g-2">
+
+                    <div class="col-md-5">
+                        <label class="form-label">Label</label> <span class="text-danger">*</span>
+                        <input class="fld-label form-control" value="${existing?.label || ''}" />
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label">Required</label>
+                        <div><input type="checkbox" class="fld-required form-check-input"
+                            ${existing?.isRequired ? 'checked' : ''} /></div>
+                    </div>
+
+                    <div class="col-md-5">
+                        <label class="form-label">Option Set</label> <span class="text-danger">*</span>
+                        <select class="fld-optionset form-select">
+                            <option value="">-- Choose Option Set --</option>
+                            ${optionSets.map(s => `
+                                <option value="${s.optionId}" ${existing?.optionId == s.optionId ? 'selected' : ''}>
+                                    ${s.name}
+                                </option>`).join('')}
+                        </select>
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="col-12 mt-2">
+                        <label class="form-label">Options</label>
+                        <select class="fld-option form-select">
+                            <option value="">-- Select --</option>
+                        </select>
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="col-12 mt-2 text-end">
+                        <button class="remove-field btn btn-sm btn-danger" type="button">Remove</button>
+                    </div>
+
+                </div>
+            </div>`;
+        }
+
+        // Validate Form
+        function validateForm() {
+            let valid = true;
+
+            $('#formTitle').removeClass('is-invalid');
+            if (!$('#formTitle').val().trim()) {
+                $('#formTitle').addClass('is-invalid')
+                    .siblings('.invalid-feedback').text('Form title is required');
+                valid = false;
+            }
+
+            $(".field-item").each(function () {
+                let $f = $(this);
+
+                let label = $f.find('.fld-label');
+                let optionSet = $f.find('.fld-optionset');
+                let option = $f.find('.fld-option');
+
+                label.removeClass('is-invalid');
+                optionSet.removeClass('is-invalid');
+                option.removeClass('is-invalid');
+
+                if (!label.val().trim()) {
+                    label.addClass('is-invalid')
+                        .siblings('.invalid-feedback').text('Label is required');
+                    valid = false;
+                }
+
+                if (!optionSet.val()) {
+                    optionSet.addClass('is-invalid')
+                        .siblings('.invalid-feedback').text('Option Set is required');
+                    valid = false;
+                }
+
+                if (optionSet.val() && !option.val()) {
+                    option.addClass('is-invalid')
+                        .siblings('.invalid-feedback').text('Please choose a value');
+                    valid = false;
+                }
+            });
+
+            return valid;
+        }
+
+        // Initialize Page
+        $(async function () {
+            await loadOptionSets();
+
+            existingFields.forEach(f => {
+                let html = buildFieldHtml(f);
+                $("#fieldsContainer").append(html);
+
+                if (f.optionId) {
+                    const $last = $("#fieldsContainer .field-item").last();
+                    const $optionSelect = $last.find(".fld-option");
+
+                    loadOptionValues(f.optionId).done(vals => {
+                        $optionSelect.html('<option value="">-- Select --</option>');
+                        vals.forEach(v => {
+                            $optionSelect.append(`<option value="${v.optionValueId}">${v.value}</option>`);
+                        });
+
+                        if (f.selectedOptionValueId)
+                            $optionSelect.val(f.selectedOptionValueId);
+                    });
+                }
+            });
+        });
+
+        // Add Field
+        $('#addField').on('click', function (e) {
+            e.preventDefault();
+            $("#fieldsContainer").append(buildFieldHtml(null));
+        });
+
+        // Remove Field
+        $('#fieldsContainer').on('click', '.remove-field', function () {
+            $(this).closest('.field-item').remove();
+        });
+
+        // OPTION SET CHANGE LOGIC (FIXED)
+        $('#fieldsContainer').on('change', '.fld-optionset', function () {
+
+            let optionId = $(this).val();
+            let $field = $(this).closest('.field-item');
+            let $optionSelect = $field.find('.fld-option');
+
+            $optionSelect.html('<option value="">-- Select --</option>');
+            $optionSelect.val(null);
+
+            if (!optionId) return;
+
+            loadOptionValues(optionId).done(vals => {
+                vals.forEach(v => {
+                    $optionSelect.append(`<option value="${v.optionValueId}">${v.value}</option>`);
+                });
+            });
+
+        });
+
+        // UPDATE FORM
+        $('#updateForm').on('click', function () {
+
+            if (!validateForm()) {
+                Swal.fire('Validation Error', 'Please correct the highlighted fields.', 'warning');
+                return;
+            }
+
+            let id = parseInt($('#formId').val());
+            let title = $('#formTitle').val();
+
+            let fields = [];
+            $('.field-item').each(function () {
+                fields.push({
+                    label: $(this).find('.fld-label').val().trim(),
+                    isRequired: $(this).find('.fld-required').is(':checked'),
+                    optionId: parseInt($(this).find('.fld-optionset').val()),
+                    selectedOptionValueId: parseInt($(this).find('.fld-option').val()) || null
+                });
+            });
+
+            $.ajax({
+                url: '/api/form/update',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    formId: id,
+                    title,
+                    fields
+                }),
+                success: function () {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Updated!',
+                        text: 'Form updated successfully.'
+                    }).then(() => window.location.href = '/');
+                },
+                error: (xhr) => {
+                    Swal.fire('Error', xhr.responseText || 'Update failed', 'error');
+                }
+            });
+        });
+
+    </script>
+}

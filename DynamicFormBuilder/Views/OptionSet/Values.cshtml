@@ -1,0 +1,174 @@
+﻿@model List<DynamicFormBuilder.Models.OptionDto>
+
+@{
+    int setId = (int)ViewBag.SetId;
+    string setName = (string)ViewBag.SetName;
+    ViewData["Title"] = "Manage Values";
+}
+
+<div class="card">
+    <div class="card-body">
+        <h4>Manage Values for: @setName</h4>
+
+        <form id="addValueForm" class="row g-2 mb-4 align-items-center">
+            <input type="hidden" name="setId" value="@setId" />
+
+            <div class="col-auto">
+                <input id="valueInput" name="value" class="form-control"
+                       placeholder="Enter new value" />
+                <div class="invalid-feedback">Value is required</div>
+            </div>
+
+            <div class="col-auto">
+                <button type="submit" class="btn btn-sm btn-success">Add</button>
+            </div>
+        </form>
+
+        <table class="table">
+            <thead>
+                <tr>                   
+                    <th>Value</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var v in Model)
+                {
+                    <tr>
+                        @* <td>@v.OptionValueId</td> *@
+                        <td>@v.Value</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary edit-btn"
+                                    data-id="@v.OptionValueId"
+                                    data-set="@setId"
+                                    data-value="@v.Value">
+                                Edit
+                            </button>
+                            <button class="btn btn-sm btn-danger delete-btn"
+                                    data-id="@v.OptionValueId"
+                                    data-set="@setId">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <!-- Edit Modal -->
+        <div class="modal fade" id="editValueModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Value</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="editValueId" />
+                        <input type="hidden" id="editSetId" />
+                        <div class="mb-3">
+                            <label class="form-label">Value</label>
+                            <input type="text" id="editValueInput" class="form-control" />
+                            <div class="invalid-feedback">Value is required or duplicate.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-primary" id="btnEditSave">Update</button>
+                        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <a href="@Url.Action("Index", "OptionSet")" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="~/lib/bootstrap/js/sweetalert2@11.js"></script>
+
+@section Scripts {
+    <script>   
+        $("#addValueForm").on("submit", function (e) {
+            e.preventDefault();
+
+            let value = $("#valueInput").val().trim();
+            let setId = @setId;
+
+            if (!value) {
+                $("#valueInput").addClass("is-invalid");
+                return;
+            } else {
+                $("#valueInput").removeClass("is-invalid");
+            }
+
+            $.post("/OptionSet/AddValue",
+                { setId: setId, value: value },
+                function () {              
+                    location.reload();
+                }
+            ).fail(function (xhr) {             
+                alert("Error: " + xhr.responseText);
+            });
+        });
+
+          // Open modal
+        $(".edit-btn").on("click", function () {
+            let id = $(this).data("id");
+            let setId = $(this).data("set");
+            let value = $(this).data("value");
+
+            $("#editValueId").val(id);
+            $("#editSetId").val(setId);
+            $("#editValueInput").val(value).removeClass("is-invalid");
+
+            var modal = new bootstrap.Modal(document.getElementById('editValueModal'));
+            modal.show();
+        });
+    
+        $("#btnEditSave").on("click", function () {
+            let id = $("#editValueId").val();
+            let setId = $("#editSetId").val();
+            let value = $("#editValueInput").val().trim();
+
+            $("#editValueInput").removeClass("is-invalid");
+
+            if (!value) {
+                $("#editValueInput").addClass("is-invalid");
+                return;
+            }
+
+            $.post("/OptionSet/EditValue",
+                { id: id, setId: setId, value: value },
+                function () {
+                    location.reload();
+                }
+            ).fail(function (xhr) {
+                $("#editValueInput").addClass("is-invalid");
+                $("#editValueInput").next(".invalid-feedback").text(xhr.responseText);
+            });
+        });
+
+        $(".delete-btn").on("click", function () {
+
+            let id = $(this).data("id");
+            let setId = $(this).data("set");
+
+            if (confirm("Are you sure you want to delete this value? This cannot be undone.")) {
+                $.post("/OptionSet/DeleteValue",
+                    { id: id, setId: setId },
+                    function () {         
+                        location.reload();
+                    }
+                ).fail(function (xhr) {
+                    alert("Error: " + xhr.responseText);
+                });
+            }
+
+        });
+    </script>
+}
+
